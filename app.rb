@@ -1,5 +1,8 @@
 require "sinatra"
 require "sinatra/reloader"
+require "http"
+
+#sinatra loads json for us
 
 get("/") do
   "
@@ -15,9 +18,18 @@ end
 get("/process_umbrella") do
   @user_location = params.fetch("user_loc")
 
-  gmaps_url = "https://maps.googleapis.com/maps/api/geocode/json?address=Merchandise%20Mart%20Chicago&key=AIzaSyDKz4Y3bvrTsWpPRNn9ab55OkmcwZxLOHI"
+  url_encoded_string = @user_location.gsub("", "+")
+
+  gmaps_url = "https://maps.googleapis.com/maps/api/geocode/json?address=#{url_encoded_string}&key=GMAPS_KEY"
   
   @raw_response = HTTP.get(gmaps_url).to_s
+
+  @parsed_response = JSON.parse(@raw_response)
+
+  @loc_hash = @parsed_response.dig("results", 0, "geometry, "location")
+
+  @latitude = @loc_hash.fetch("lat")
+  @longitude = @loc_hash.fetch("lng")
 
   erb(:umbrella_results)
 end
